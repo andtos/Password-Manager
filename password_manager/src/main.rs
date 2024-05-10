@@ -1,6 +1,7 @@
-use std::{fs, io, process};
+use std::{fs, process};
 
 use password_manager::{
+    logged_in::{logged_in_user_loop, prompt_input},
     login::{Login, User},
     storage::STORAGE_FILE,
 };
@@ -33,7 +34,6 @@ fn login(user: Option<User>) {
 fn register(user: Option<User>) {
     match user {
         None => {
-            println!("Error Registering New User");
             unknown_user_loop();
         }
         Some(user) => {
@@ -41,10 +41,6 @@ fn register(user: Option<User>) {
             logged_in_user_loop(user);
         }
     }
-}
-
-fn logged_in_user_loop(user: User) {
-    println!("logged in loop {}, {}", user.username, user.password);
 }
 
 fn unknown_user_loop() {
@@ -73,13 +69,4 @@ fn unknown_user_loop() {
             }
         };
     }
-}
-
-fn prompt_input(prompt: &str) -> String {
-    let mut input = String::new();
-    println!("{}", prompt);
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read line");
-    input.trim().to_lowercase().to_string()
 }
