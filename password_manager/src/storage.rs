@@ -1,6 +1,6 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
-    fs::{self, File, OpenOptions},
+    collections::{hash_map::{DefaultHasher, Entry}, HashMap},
+    fs::{self, File, OpenOptions}, hash::{Hash, Hasher},
 };
 
 use serde::{Deserialize, Serialize};
@@ -15,14 +15,14 @@ struct LoginDetails {
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
-    login_password: String,
-    passwords: HashMap<String, LoginDetails>,
+    login_password: u64,
+    passwords: HashMap<u64, LoginDetails>,
 }
 
 impl User {
     pub fn new(login_password: String) -> Self {
         User {
-            login_password,
+            login_password: hash_string(&login_password),
             passwords: HashMap::new(),
         }
     }
@@ -54,24 +54,30 @@ impl Storage {
     }
 }
 
+fn hash_string(string: &String) -> u64{
+    let mut hasher = DefaultHasher::new();
+    string.hash(&mut hasher);
+    hasher.finish()
+}
+
 pub fn login(username: &String, password: String) -> Option<String> {
     if let Ok(storage) = Storage::load(STORAGE_FILE) {
         let user = storage.data.get(username)?;
-        if user.login_password == password {
+        if user.login_password == hash_string(&password) {
             return Some(username.to_string());
         }
     }
     None
 }
 
-pub fn add_site(username: &String, site_name: String, password: &str) -> Result<(), StorageError> {
+pub fn add_site(username: &String, new_username: &String, site_name: String, password: &str) -> Result<(), StorageError> {
     let mut storage = Storage::load(STORAGE_FILE)?;
     let user = storage.data.get_mut(username).unwrap();
     let login_info = LoginDetails {
-        username: username.to_string(),
+        username: new_username.to_string(),
         password: password.to_string(),
     };
-    user.passwords.insert(site_name, login_info);
+    user.passwords.insert(hash_string(&site_name), login_info);
     let json_string =
         serde_json::to_string_pretty(&storage).map_err(|e| StorageError(e.to_string()))?;
     fs::write(STORAGE_FILE, json_string.as_bytes()).map_err(|e| StorageError(e.to_string()))?;
@@ -81,7 +87,7 @@ pub fn add_site(username: &String, site_name: String, password: &str) -> Result<
 pub fn retrieve_password(username: &String, site_name: String) -> Option<(String, String)> {
     if let Ok(storage) = Storage::load(STORAGE_FILE) {
         let user = storage.data.get(username)?;
-        let details = user.passwords.get(&site_name)?;
+        let details = user.passwords.get(&hash_string(&site_name))?;
         Some((details.username.to_string(), details.password.to_string()))
     } else {
         None
