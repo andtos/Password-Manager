@@ -3,7 +3,7 @@ use std::{fs, process};
 use password_manager::{
     logged_in::{logged_in_user_loop, prompt_input},
     login::{Login, User},
-    storage::STORAGE_FILE,
+    storage::{STORAGE_DIRECTORY, STORAGE_FILE},
 };
 
 fn main() {
@@ -11,9 +11,12 @@ fn main() {
     if fs::metadata(STORAGE_FILE).is_ok() {
         unknown_user_loop();
     } else {
-        match fs::File::create(STORAGE_FILE) {
-            Ok(_) => unknown_user_loop(),
-            Err(_) => println!("Storage file could not be created... Shutting down"),
+        match fs::create_dir_all(STORAGE_DIRECTORY) {
+            Ok(_) => match fs::File::create(STORAGE_FILE) {
+                Ok(_) => unknown_user_loop(),
+                Err(_) => println!("Storage file could not be created... Shutting down"),
+            },
+            _ => println!("Error creating storage directory... Shutting down"),
         }
     }
 }

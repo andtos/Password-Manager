@@ -3,7 +3,9 @@ use std::{io, process};
 use clipboard::{ClipboardContext, ClipboardProvider};
 
 use crate::{
-    login::User, password::generate_secure_password, storage::{add_site, retrieve_password}
+    login::User,
+    password::generate_secure_password,
+    storage::{add_site, retrieve_password},
 };
 
 pub fn logged_in_user_loop(user: User) {

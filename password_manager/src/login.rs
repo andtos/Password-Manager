@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use crate::storage::{self, add_to_storage};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {

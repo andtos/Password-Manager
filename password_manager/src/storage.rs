@@ -1,10 +1,15 @@
 use std::{
-    collections::{hash_map::{DefaultHasher, Entry}, HashMap},
-    fs::{self, File, OpenOptions}, hash::{Hash, Hasher},
+    collections::{
+        hash_map::{DefaultHasher, Entry},
+        HashMap,
+    },
+    fs::{self, File, OpenOptions},
+    hash::{Hash, Hasher},
 };
 
 use serde::{Deserialize, Serialize};
 pub const STORAGE_FILE: &str = "storage/storage.json";
+pub const STORAGE_DIRECTORY: &str = "storage";
 
 pub struct StorageError(pub String);
 
@@ -54,7 +59,7 @@ impl Storage {
     }
 }
 
-fn hash_string(string: &String) -> u64{
+fn hash_string(string: &String) -> u64 {
     let mut hasher = DefaultHasher::new();
     string.hash(&mut hasher);
     hasher.finish()
@@ -70,7 +75,12 @@ pub fn login(username: &String, password: String) -> Option<String> {
     None
 }
 
-pub fn add_site(username: &String, new_username: &String, site_name: String, password: &str) -> Result<(), StorageError> {
+pub fn add_site(
+    username: &String,
+    new_username: &String,
+    site_name: String,
+    password: &str,
+) -> Result<(), StorageError> {
     let mut storage = Storage::load(STORAGE_FILE)?;
     let user = storage.data.get_mut(username).unwrap();
     let login_info = LoginDetails {
@@ -102,6 +112,7 @@ pub fn add_to_storage(username: String, password: String) -> Result<(), StorageE
         .map_err(|e| StorageError(e.to_string()))?;
     let mut deserialized: Storage = serde_json::from_reader(&file).unwrap_or(Storage::new());
     let new_user = User::new(password);
+
     match deserialized.data.entry(username) {
         Entry::Occupied(_) => return Err(StorageError("Username is taken".to_string())),
         Entry::Vacant(entry) => {
